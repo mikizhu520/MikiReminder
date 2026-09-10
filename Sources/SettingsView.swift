@@ -49,7 +49,15 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        ZStack {
+            // 背景：深色模式不透明，浅色模式毛玻璃
+            if colorScheme == .dark {
+                Color(NSColor.windowBackgroundColor)
+            } else {
+                Rectangle().fill(.ultraThinMaterial)
+            }
+
+            HStack(spacing: 0) {
             // 左侧 Tab 栏
             VStack(spacing: 2) {
                 ForEach(SettingsTab.allCases, id: \.self) { tab in
@@ -84,7 +92,7 @@ struct SettingsView: View {
                 Spacer()
             }
             .frame(width: 120)
-            .padding(.top, 52)
+            .padding(.top, 16)
             .padding(.horizontal, 10)
             .padding(.bottom, 16)
             .background(sidebarBg)
@@ -101,14 +109,14 @@ struct SettingsView: View {
                         healthSettings
                     }
                 }
-                .padding(.top, 56)
+                .padding(.top, 20)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        }
         .frame(width: 580, height: 540)
-        .background(.ultraThinMaterial)
     }
 
     // MARK: - 计时设置

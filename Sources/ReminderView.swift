@@ -15,6 +15,9 @@ struct ReminderView: View {
 
     @State private var animate = false
     @State private var opacity = 0.0
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var isDark: Bool { colorScheme == .dark }
 
     private var title: String {
         switch type {
@@ -94,13 +97,13 @@ struct ReminderView: View {
             .padding(.vertical, 28)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white.opacity(0.85))
+                    .fill(isDark ? Color(NSColor.windowBackgroundColor).opacity(0.95) : Color.white.opacity(0.85))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                    .stroke(isDark ? Color.white.opacity(0.15) : Color.black.opacity(0.06), lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.12), radius: 20, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(isDark ? 0.4 : 0.12), radius: 20, x: 0, y: 8)
             .opacity(opacity)
             .scaleEffect(opacity)
         }

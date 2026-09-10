@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupStatusItem()
         setupPopover()
+        setupMainMenu()
         setupTimerCallbacks()
         setupMenuBarTimerUpdate()
         setupReminderCallbacks()
@@ -54,6 +55,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.target = self
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
+    }
+
+    /// 创建应用主菜单（屏幕顶部菜单栏）
+    private func setupMainMenu() {
+        let mainMenu = NSMenu()
+
+        // MikiReminder 菜单
+        let appMenuItem = NSMenuItem()
+        let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "关于 MikiReminder", action: #selector(menuAbout), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "设置...", action: #selector(menuOpenSettings), keyEquivalent: ",")
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "退出 MikiReminder", action: #selector(menuQuit), keyEquivalent: "q")
+        appMenuItem.submenu = appMenu
+        mainMenu.addItem(appMenuItem)
+
+        // 文件菜单
+        let fileMenuItem = NSMenuItem()
+        let fileMenu = NSMenu(title: "文件")
+        fileMenu.addItem(withTitle: "关闭", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        fileMenuItem.submenu = fileMenu
+        mainMenu.addItem(fileMenuItem)
+
+        // 编辑菜单
+        let editMenuItem = NSMenuItem()
+        let editMenu = NSMenu(title: "编辑")
+        editMenu.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
+        editMenu.addItem(withTitle: "重做", action: Selector(("redo:")), keyEquivalent: "Z")
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "复制", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "全选", action: Selector(("selectAll:")), keyEquivalent: "a")
+        editMenuItem.submenu = editMenu
+        mainMenu.addItem(editMenuItem)
+
+        // 窗口菜单
+        let windowMenuItem = NSMenuItem()
+        let windowMenu = NSMenu(title: "窗口")
+        windowMenu.addItem(withTitle: "最小化", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        windowMenu.addItem(withTitle: "缩放", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
+        windowMenu.addItem(.separator())
+        windowMenu.addItem(withTitle: "前置全部窗口", action: #selector(NSApplication.arrangeInFront(_:)), keyEquivalent: "")
+        windowMenuItem.submenu = windowMenu
+        mainMenu.addItem(windowMenuItem)
+
+        // 帮助菜单
+        let helpMenuItem = NSMenuItem()
+        let helpMenu = NSMenu(title: "帮助")
+        helpMenu.addItem(withTitle: "MikiReminder 帮助", action: nil, keyEquivalent: "")
+        helpMenuItem.submenu = helpMenu
+        mainMenu.addItem(helpMenuItem)
+
+        NSApp.mainMenu = mainMenu
     }
 
     @objc private func handleStatusItemClick(_ sender: AnyObject?) {
@@ -398,36 +454,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - 设置窗口
 
     private func openSettings() {
-        if let window = settingsWindow {
+        // 切换为普通应用激活策略，显示菜单栏和 Dock 图标
+        NSApp.setActivationPolicy(.regular)
+
+        // 延迟激活，等待激活策略生效
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            if let window = self.settingsWindow {
+                window.makeKeyAndOrderFront(nil)
+                window.makeMain()
+                NSApp.activate(ignoringOtherApps: true)
+                return
+            }
+
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 580, height: 540),
+                styleMask: [.titled, .closable, .miniaturizable],
+                backing: .buffered,
+                defer: false
+            )
+            window.title = "设置"
+            window.center()
+            window.isOpaque = false
+            window.backgroundColor = .clear
+            window.isMovableByWindowBackground = true
+            window.hasShadow = true
+
+            let hostingView = NSHostingView(rootView: SettingsView())
+            hostingView.wantsLayer = true
+            hostingView.layer?.backgroundColor = NSColor.clear.cgColor
+
+            window.contentView = hostingView
+            window.isReleasedWhenClosed = false
+
+            // 窗口关闭时切回菜单栏应用模式
+            NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: window,
+                queue: .main
+            ) { [weak self] _ in
+                NSApp.setActivationPolicy(.accessory)
+                self?.settingsWindow = nil
+            }
+
             window.makeKeyAndOrderFront(nil)
+            window.makeMain()
             NSApp.activate(ignoringOtherApps: true)
-            return
+
+            self.settingsWindow = window
         }
-
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 580, height: 540),
-            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
-            backing: .buffered,
-            defer: false
-        )
-        window.title = "设置"
-        window.center()
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.titlebarAppearsTransparent = true
-        window.isMovableByWindowBackground = true
-        window.hasShadow = true
-
-        let hostingView = NSHostingView(rootView: SettingsView())
-        hostingView.wantsLayer = true
-        hostingView.layer?.backgroundColor = NSColor.clear.cgColor
-
-        window.contentView = hostingView
-        window.isReleasedWhenClosed = false
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-
-        settingsWindow = window
     }
 
     // MARK: - 退出

@@ -20,8 +20,6 @@
     <string>AppIcon</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
-    <key>LSUIElement</key>
-    <true/>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 MikiReminder. All rights reserved.</string>
     <key>NSHighResolutionCapable</key>
