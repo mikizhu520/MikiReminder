@@ -1,0 +1,29 @@
+# build 产物
+build/
+*.app
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+*.xcuserstate
+project.xcworkspace
+xcuserdata/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# 临时文件
+*.tmp
+*.temp
+*.log
+*.swp
+*~
+
+# 编辑器
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
