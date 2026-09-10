@@ -6,14 +6,21 @@ import AppKit
 struct MenuBarView: View {
     @ObservedObject private var timer = TimerManager.shared
     @ObservedObject private var settings = Settings.shared
+    @Environment(\.colorScheme) private var colorScheme
 
     var onOpenSettings: () -> Void
     var onQuit: () -> Void
 
+    private var isDark: Bool { colorScheme == .dark }
+
     var body: some View {
         ZStack {
-            // 透明背景，让 NSVisualEffectView 毛玻璃透出
-            Color.clear
+            // 深色模式用不透明深色背景，浅色模式保持透明让毛玻璃透出
+            if isDark {
+                Color(NSColor.windowBackgroundColor)
+            } else {
+                Color.clear
+            }
 
             VStack(spacing: 0) {
                 // 顶部栏
@@ -49,7 +56,7 @@ struct MenuBarView: View {
 
                             Text(timer.timeRemainingString)
                                 .font(.system(size: 54, weight: .bold, design: .rounded))
-                                .foregroundColor(Color(red: 0.08, green: 0.08, blue: 0.08))
+                                .foregroundColor(isDark ? .white : Color(red: 0.08, green: 0.08, blue: 0.08))
                                 .monospacedDigit()
                         }
                         .padding(.top, 8)
@@ -59,16 +66,16 @@ struct MenuBarView: View {
                             Button(action: { timer.startBreakNow() }) {
                                 Text("开始休息")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(Color(red: 0.1, green: 0.1, blue: 0.1))
+                                    .foregroundColor(isDark ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 9)
                                     .background(
                                         Capsule()
-                                            .fill(Color.white.opacity(0.7))
+                                            .fill(isDark ? Color.white.opacity(0.15) : Color.white.opacity(0.7))
                                     )
                                     .overlay(
                                         Capsule()
-                                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                            .stroke(isDark ? Color.white.opacity(0.2) : Color.black.opacity(0.1), lineWidth: 1)
                                     )
                             }
                             .buttonStyle(.plain)
@@ -77,16 +84,16 @@ struct MenuBarView: View {
                                 Button(action: { timer.addWorkTime(minutes: min) }) {
                                     Text("+ \(min)分")
                                         .font(.system(size: 13, weight: .medium))
-                                        .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.2))
+                                        .foregroundColor(isDark ? Color.white.opacity(0.9) : Color(red: 0.2, green: 0.2, blue: 0.2))
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 9)
                                         .background(
                                             Capsule()
-                                                .fill(Color.white.opacity(0.6))
+                                                .fill(isDark ? Color.white.opacity(0.1) : Color.white.opacity(0.6))
                                         )
                                         .overlay(
                                             Capsule()
-                                                .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                                                .stroke(isDark ? Color.white.opacity(0.15) : Color.black.opacity(0.08), lineWidth: 1)
                                         )
                                 }
                                 .buttonStyle(.plain)
@@ -102,7 +109,7 @@ struct MenuBarView: View {
                                 title: "当前专注时间",
                                 value: timer.currentFocusTimeString
                             )
-                            Divider().background(Color.black.opacity(0.06))
+                            Divider().background(isDark ? Color.white.opacity(0.1) : Color.black.opacity(0.06))
                             infoRow(
                                 icon: "cup.and.saucer.fill",
                                 iconColor: Color(red: 0.55, green: 0.4, blue: 0.25),
@@ -112,7 +119,7 @@ struct MenuBarView: View {
                         }
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.5))
+                                .fill(isDark ? Color.white.opacity(0.08) : Color.white.opacity(0.5))
                         )
                         .padding(.horizontal, 16)
                         .padding(.bottom, 14)
@@ -139,7 +146,7 @@ struct MenuBarView: View {
             Spacer()
             Text(value)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Color(red: 0.08, green: 0.08, blue: 0.08))
+                .foregroundColor(isDark ? .white : Color(red: 0.08, green: 0.08, blue: 0.08))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 11)

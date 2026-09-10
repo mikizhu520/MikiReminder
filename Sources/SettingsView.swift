@@ -1,234 +1,387 @@
 import SwiftUI
 
-/// 设置面板
+/// 设置面板（液态玻璃风格 + 左侧 Tab 切换）
 struct SettingsView: View {
     @ObservedObject private var settings = Settings.shared
     @ObservedObject private var timer = TimerManager.shared
+    @Environment(\.colorScheme) private var colorScheme
 
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                // 标题
-                Text("设置")
-                    .font(.system(size: 24, weight: .bold))
-                    .padding(.bottom, 4)
+    @State private var selectedTab: SettingsTab = .timer
 
-                // 计时设置
-                settingsSection(title: "计时设置", icon: "timer") {
-                    VStack(alignment: .leading, spacing: 16) {
-                        stepperRow(
-                            title: "工作时长",
-                            subtitle: "每次专注的时间",
-                            value: $settings.workMinutes,
-                            range: 5...60,
-                            unit: "分钟"
-                        )
+    enum SettingsTab: String, CaseIterable {
+        case timer = "计时"
+        case reminder = "提醒"
+        case health = "健康"
 
-                        Divider()
-
-                        stepperRow(
-                            title: "休息时长",
-                            subtitle: "每次休息的时间",
-                            value: $settings.breakSeconds,
-                            range: 10...300,
-                            unit: "秒"
-                        )
-                    }
-                }
-
-                // 提醒设置
-                settingsSection(title: "提醒设置", icon: "bell") {
-                    VStack(alignment: .leading, spacing: 14) {
-                        toggleRow(
-                            title: "提示音",
-                            subtitle: "休息开始和结束时播放声音",
-                            isOn: $settings.soundEnabled
-                        )
-
-                        Divider()
-
-                        toggleRow(
-                            title: "严格模式",
-                            subtitle: "休息期间无法跳过，必须完成",
-                            isOn: $settings.strictMode
-                        )
-
-                        Divider()
-
-                        toggleRow(
-                            title: "菜单栏显示倒计时",
-                            subtitle: "在菜单栏图标旁显示剩余时间",
-                            isOn: $settings.showTimerInMenuBar
-                        )
-                    }
-                }
-
-                // 健康提醒
-                settingsSection(title: "健康提醒", icon: "heart.text.square") {
-                    VStack(alignment: .leading, spacing: 14) {
-                        toggleRow(
-                            title: "眨眼提醒",
-                            subtitle: "定时提醒眨眼，缓解眼疲劳",
-                            isOn: $settings.blinkReminderEnabled
-                        )
-
-                        if settings.blinkReminderEnabled {
-                            stepperRow(
-                                title: "眨眼间隔",
-                                subtitle: "每隔多久提醒一次眨眼",
-                                value: $settings.blinkIntervalMinutes,
-                                range: 1...30,
-                                unit: "分钟"
-                            )
-                        }
-
-                        Divider()
-
-                        toggleRow(
-                            title: "站立提醒",
-                            subtitle: "定时提醒站起来活动身体",
-                            isOn: $settings.standingReminderEnabled
-                        )
-
-                        if settings.standingReminderEnabled {
-                            stepperRow(
-                                title: "站立间隔",
-                                subtitle: "每隔多久提醒一次站立",
-                                value: $settings.standingIntervalMinutes,
-                                range: 15...120,
-                                unit: "分钟"
-                            )
-                        }
-
-                        Divider()
-
-                        toggleRow(
-                            title: "喝水提醒",
-                            subtitle: "定时提醒喝水，补充水分",
-                            isOn: $settings.waterReminderEnabled
-                        )
-
-                        if settings.waterReminderEnabled {
-                            stepperRow(
-                                title: "喝水间隔",
-                                subtitle: "每隔多久提醒一次喝水",
-                                value: $settings.waterIntervalMinutes,
-                                range: 15...120,
-                                unit: "分钟"
-                            )
-                        }
-                    }
-                }
-
-                // 通用设置
-                settingsSection(title: "通用", icon: "gearshape") {
-                    VStack(alignment: .leading, spacing: 14) {
-                        toggleRow(
-                            title: "开机自启动",
-                            subtitle: "登录时自动启动 MikiReminder",
-                            isOn: $settings.launchAtLogin
-                        )
-
-                        Divider()
-
-                        toggleRow(
-                            title: "空闲时暂停",
-                            subtitle: "检测到电脑空闲时自动暂停计时",
-                            isOn: $settings.pauseWhenIdle
-                        )
-                    }
-                }
-
-                // 预设方案
-                settingsSection(title: "快速预设", icon: "bolt") {
-                    HStack(spacing: 12) {
-                        presetButton(title: "20-20-20", desc: "标准护眼") {
-                            settings.workMinutes = 20
-                            settings.breakSeconds = 20
-                            timer.reset()
-                            timer.start()
-                        }
-                        presetButton(title: "25-5", desc: "番茄工作法") {
-                            settings.workMinutes = 25
-                            settings.breakSeconds = 300
-                            timer.reset()
-                            timer.start()
-                        }
-                        presetButton(title: "50-10", desc: "深度工作") {
-                            settings.workMinutes = 50
-                            settings.breakSeconds = 600
-                            timer.reset()
-                            timer.start()
-                        }
-                    }
-                }
-
-                Spacer(minLength: 20)
+        var icon: String {
+            switch self {
+            case .timer: return "timer"
+            case .reminder: return "bell.fill"
+            case .health: return "heart.fill"
             }
-            .padding(28)
         }
-        .frame(width: 480, height: 880)
-        .background(Color(NSColor.windowBackgroundColor))
     }
 
-    // MARK: - 子视图组件
+    // MARK: - 自适应颜色
 
-    private func settingsSection<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.blue)
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
+    private var primaryText: Color {
+        colorScheme == .dark ? Color.white.opacity(0.92) : Color.black.opacity(0.9)
+    }
+
+    private var secondaryText: Color {
+        colorScheme == .dark ? Color.white.opacity(0.55) : Color.black.opacity(0.5)
+    }
+
+    private var tabUnselectedText: Color {
+        colorScheme == .dark ? Color.white.opacity(0.7) : Color.black.opacity(0.75)
+    }
+
+    private var sidebarBg: Color {
+        colorScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.04)
+    }
+
+    private var cardBorder: Color {
+        colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.08)
+    }
+
+    private var dividerColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            // 左侧 Tab 栏
+            VStack(spacing: 2) {
+                ForEach(SettingsTab.allCases, id: \.self) { tab in
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            selectedTab = tab
+                        }
+                    }) {
+                        HStack(spacing: 10) {
+                            Image(systemName: tab.icon)
+                                .font(.system(size: 14, weight: .medium))
+                                .frame(width: 20)
+                            Text(tab.rawValue)
+                                .font(.system(size: 14, weight: .medium))
+                            Spacer()
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 11)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(selectedTab == tab ? Color.blue.opacity(0.18) : Color.clear)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(selectedTab == tab ? Color.blue.opacity(0.35) : Color.clear, lineWidth: 0.5)
+                        )
+                        .foregroundColor(selectedTab == tab ? .blue : tabUnselectedText)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                Spacer()
             }
-            .padding(.horizontal, 4)
+            .frame(width: 120)
+            .padding(.top, 52)
+            .padding(.horizontal, 10)
+            .padding(.bottom, 16)
+            .background(sidebarBg)
 
-            content()
-                .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(NSColor.controlBackgroundColor))
-                )
+            // 右侧内容区
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    switch selectedTab {
+                    case .timer:
+                        timerSettings
+                    case .reminder:
+                        reminderSettings
+                    case .health:
+                        healthSettings
+                    }
+                }
+                .padding(.top, 56)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .frame(width: 580, height: 540)
+        .background(.ultraThinMaterial)
+    }
+
+    // MARK: - 计时设置
+
+    private var timerSettings: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionTitle("计时设置")
+
+            glassCard {
+                VStack(alignment: .leading, spacing: 0) {
+                    stepperRow(
+                        title: "工作时长",
+                        subtitle: "每次专注的时间",
+                        value: $settings.workMinutes,
+                        range: 5...60,
+                        unit: "分钟"
+                    )
+                    glassDivider
+                    stepperRow(
+                        title: "休息时长",
+                        subtitle: "每次休息的时间",
+                        value: $settings.breakSeconds,
+                        range: 10...300,
+                        unit: "秒"
+                    )
+                }
+            }
+
+            sectionTitle("快速预设", small: true)
+
+            HStack(spacing: 10) {
+                presetButton(title: "20-20-20", desc: "标准护眼") {
+                    settings.workMinutes = 20
+                    settings.breakSeconds = 20
+                    timer.reset()
+                    timer.start()
+                }
+                presetButton(title: "25-5", desc: "番茄工作法") {
+                    settings.workMinutes = 25
+                    settings.breakSeconds = 300
+                    timer.reset()
+                    timer.start()
+                }
+                presetButton(title: "50-10", desc: "深度工作") {
+                    settings.workMinutes = 50
+                    settings.breakSeconds = 600
+                    timer.reset()
+                    timer.start()
+                }
+            }
+        }
+    }
+
+    // MARK: - 提醒设置
+
+    private var reminderSettings: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionTitle("提醒设置")
+
+            glassCard {
+                VStack(alignment: .leading, spacing: 0) {
+                    toggleRow(
+                        title: "提示音",
+                        subtitle: "休息开始和结束时播放声音",
+                        isOn: $settings.soundEnabled
+                    )
+                    glassDivider
+                    toggleRow(
+                        title: "严格模式",
+                        subtitle: "休息期间无法跳过，必须完成",
+                        isOn: $settings.strictMode
+                    )
+                    glassDivider
+                    toggleRow(
+                        title: "菜单栏显示倒计时",
+                        subtitle: "在菜单栏图标旁显示剩余时间",
+                        isOn: $settings.showTimerInMenuBar
+                    )
+                }
+            }
+
+            sectionTitle("通用", small: true)
+
+            glassCard {
+                VStack(alignment: .leading, spacing: 0) {
+                    toggleRow(
+                        title: "开机自启动",
+                        subtitle: "登录时自动启动 MikiReminder",
+                        isOn: $settings.launchAtLogin
+                    )
+                    glassDivider
+                    toggleRow(
+                        title: "空闲时暂停",
+                        subtitle: "检测到电脑空闲时自动暂停计时",
+                        isOn: $settings.pauseWhenIdle
+                    )
+                    glassDivider
+                    appearanceRow
+                }
+            }
+        }
+    }
+
+    // MARK: - 健康提醒设置
+
+    private var healthSettings: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionTitle("健康提醒")
+
+            glassCard {
+                VStack(alignment: .leading, spacing: 0) {
+                    toggleRow(
+                        title: "眨眼提醒",
+                        subtitle: "定时提醒眨眼，缓解眼疲劳",
+                        isOn: $settings.blinkReminderEnabled
+                    )
+                    if settings.blinkReminderEnabled {
+                        glassDivider
+                        stepperRow(
+                            title: "眨眼间隔",
+                            subtitle: "每隔多久提醒一次",
+                            value: $settings.blinkIntervalMinutes,
+                            range: 1...30,
+                            unit: "分钟"
+                        )
+                    }
+
+                    glassDivider
+
+                    toggleRow(
+                        title: "站立提醒",
+                        subtitle: "定时提醒站起来活动身体",
+                        isOn: $settings.standingReminderEnabled
+                    )
+                    if settings.standingReminderEnabled {
+                        glassDivider
+                        stepperRow(
+                            title: "站立间隔",
+                            subtitle: "每隔多久提醒一次",
+                            value: $settings.standingIntervalMinutes,
+                            range: 15...120,
+                            unit: "分钟"
+                        )
+                    }
+
+                    glassDivider
+
+                    toggleRow(
+                        title: "喝水提醒",
+                        subtitle: "定时提醒喝水，补充水分",
+                        isOn: $settings.waterReminderEnabled
+                    )
+                    if settings.waterReminderEnabled {
+                        glassDivider
+                        stepperRow(
+                            title: "喝水间隔",
+                            subtitle: "每隔多久提醒一次",
+                            value: $settings.waterIntervalMinutes,
+                            range: 15...120,
+                            unit: "分钟"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - 组件
+
+    private func sectionTitle(_ text: String, small: Bool = false) -> some View {
+        Text(text)
+            .font(.system(size: small ? 13 : 17, weight: .semibold))
+            .foregroundColor(small ? secondaryText : primaryText)
+            .padding(.bottom, small ? -8 : 0)
+    }
+
+    private var glassDivider: some View {
+        Rectangle()
+            .fill(dividerColor)
+            .frame(height: 0.5)
+            .padding(.leading, 16)
+    }
+
+    private func glassCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.white.opacity(0.5))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(cardBorder, lineWidth: 0.5)
+            )
+            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
     }
 
     private func stepperRow(title: String, subtitle: String, value: Binding<Int>, range: ClosedRange<Int>, unit: String) -> some View {
-        HStack {
+        HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(primaryText)
                 Text(subtitle)
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(secondaryText)
             }
             Spacer()
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Stepper("", value: value, in: range)
                     .labelsHidden()
-                Text("\(value.wrappedValue) \(unit)")
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                Text("\(value.wrappedValue)")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundColor(.blue)
-                    .frame(width: 70, alignment: .trailing)
+                    .frame(minWidth: 28, alignment: .trailing)
+                Text(unit)
+                    .font(.system(size: 11))
+                    .foregroundColor(secondaryText)
             }
         }
+        .padding(.vertical, 12)
     }
 
     private func toggleRow(title: String, subtitle: String, isOn: Binding<Bool>) -> some View {
-        HStack {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isOn.wrappedValue.toggle()
+            }
+        }) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(primaryText)
+                    Text(subtitle)
+                        .font(.system(size: 11))
+                        .foregroundColor(secondaryText)
+                }
+                Spacer()
+                Toggle("", isOn: isOn)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .allowsHitTesting(false)
+                    .scaleEffect(0.85)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.vertical, 12)
+    }
+
+    private var appearanceRow: some View {
+        HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(title)
+                Text("外观")
                     .font(.system(size: 13, weight: .medium))
-                Text(subtitle)
+                    .foregroundColor(primaryText)
+                Text("选择应用显示模式")
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(secondaryText)
             }
             Spacer()
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .toggleStyle(.switch)
+            Picker("", selection: $settings.appearanceMode) {
+                ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
+                    Text(mode.rawValue).tag(mode.rawValue)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .frame(width: 180)
         }
+        .padding(.vertical, 12)
     }
 
     private func presetButton(title: String, desc: String, action: @escaping () -> Void) -> some View {
@@ -236,19 +389,20 @@ struct SettingsView: View {
             VStack(spacing: 4) {
                 Text(title)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(primaryText)
                 Text(desc)
                     .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(secondaryText)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(NSColor.controlBackgroundColor))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-                    )
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.white.opacity(0.5))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.blue.opacity(0.25), lineWidth: 0.5)
             )
             .contentShape(Rectangle())
         }

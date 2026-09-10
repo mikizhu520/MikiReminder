@@ -1,5 +1,21 @@
 import Foundation
 import Combine
+import AppKit
+
+/// 外观模式
+enum AppearanceMode: String, CaseIterable {
+    case system = "跟随系统"
+    case light = "浅色"
+    case dark = "深色"
+
+    var nsAppearance: NSAppearance? {
+        switch self {
+        case .system: return nil
+        case .light: return NSAppearance(named: .aqua)
+        case .dark: return NSAppearance(named: .darkAqua)
+        }
+    }
+}
 
 /// 应用设置，基于 UserDefaults 持久化
 final class Settings: ObservableObject {
@@ -47,6 +63,12 @@ final class Settings: ObservableObject {
     @Published var waterIntervalMinutes: Int {
         didSet { UserDefaults.standard.set(waterIntervalMinutes, forKey: "waterIntervalMinutes") }
     }
+    @Published var appearanceMode: String {
+        didSet {
+            UserDefaults.standard.set(appearanceMode, forKey: "appearanceMode")
+            applyAppearance()
+        }
+    }
 
     private init() {
         let defaults = UserDefaults.standard
@@ -63,6 +85,19 @@ final class Settings: ObservableObject {
         self.standingIntervalMinutes = defaults.object(forKey: "standingIntervalMinutes") as? Int ?? 45
         self.waterReminderEnabled = defaults.object(forKey: "waterReminderEnabled") as? Bool ?? true
         self.waterIntervalMinutes = defaults.object(forKey: "waterIntervalMinutes") as? Int ?? 30
+        self.appearanceMode = defaults.object(forKey: "appearanceMode") as? String ?? "system"
+    }
+
+    /// 当前外观模式枚举
+    var appearance: AppearanceMode {
+        AppearanceMode(rawValue: appearanceMode) ?? .system
+    }
+
+    /// 应用外观设置
+    func applyAppearance() {
+        DispatchQueue.main.async {
+            NSApp.appearance = self.appearance.nsAppearance
+        }
     }
 
     var workDuration: TimeInterval { TimeInterval(workMinutes * 60) }

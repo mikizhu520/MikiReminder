@@ -24,6 +24,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 不显示 Dock 图标，纯菜单栏应用
         NSApp.setActivationPolicy(.accessory)
 
+        // 应用外观设置
+        settings.applyAppearance()
+
         // 请求通知权限
         TimerManager.requestNotificationAuthorization()
 
@@ -402,14 +405,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 880),
-            styleMask: [.titled, .closable, .miniaturizable],
+            contentRect: NSRect(x: 0, y: 0, width: 580, height: 540),
+            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.title = "设置"
         window.center()
-        window.contentView = NSHostingView(rootView: SettingsView())
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.hasShadow = true
+
+        let hostingView = NSHostingView(rootView: SettingsView())
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = NSColor.clear.cgColor
+
+        window.contentView = hostingView
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
