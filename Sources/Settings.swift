@@ -41,6 +41,12 @@ final class Settings: ObservableObject {
     @Published var standingIntervalMinutes: Int {
         didSet { UserDefaults.standard.set(standingIntervalMinutes, forKey: "standingIntervalMinutes") }
     }
+    @Published var waterReminderEnabled: Bool {
+        didSet { UserDefaults.standard.set(waterReminderEnabled, forKey: "waterReminderEnabled") }
+    }
+    @Published var waterIntervalMinutes: Int {
+        didSet { UserDefaults.standard.set(waterIntervalMinutes, forKey: "waterIntervalMinutes") }
+    }
 
     private init() {
         let defaults = UserDefaults.standard
@@ -55,6 +61,8 @@ final class Settings: ObservableObject {
         self.blinkIntervalMinutes = defaults.object(forKey: "blinkIntervalMinutes") as? Int ?? 10
         self.standingReminderEnabled = defaults.object(forKey: "standingReminderEnabled") as? Bool ?? true
         self.standingIntervalMinutes = defaults.object(forKey: "standingIntervalMinutes") as? Int ?? 45
+        self.waterReminderEnabled = defaults.object(forKey: "waterReminderEnabled") as? Bool ?? true
+        self.waterIntervalMinutes = defaults.object(forKey: "waterIntervalMinutes") as? Int ?? 30
     }
 
     var workDuration: TimeInterval { TimeInterval(workMinutes * 60) }

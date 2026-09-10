@@ -259,6 +259,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.showReminder(type: .standing)
             }
         }
+        reminderManager.onWaterReminder = { [weak self] in
+            DispatchQueue.main.async {
+                self?.showReminder(type: .water)
+            }
+        }
     }
 
     private func showReminder(type: ReminderType) {
@@ -397,7 +402,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 780),
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 880),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false

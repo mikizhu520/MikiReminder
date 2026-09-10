@@ -2,17 +2,20 @@ import Foundation
 import Combine
 import AppKit
 
-/// 眨眼和站立提醒管理器
+/// 眨眼、站立、喝水提醒管理器
 final class ReminderManager: ObservableObject {
     static let shared = ReminderManager()
 
     @Published private(set) var secondsSinceLastBlink: Int = 0
     @Published private(set) var secondsSinceLastStanding: Int = 0
+    @Published private(set) var secondsSinceLastWater: Int = 0
 
     /// 眨眼提醒回调
     var onBlinkReminder: (() -> Void)?
     /// 站立提醒回调
     var onStandingReminder: (() -> Void)?
+    /// 喝水提醒回调
+    var onWaterReminder: (() -> Void)?
 
     private var timer: Timer?
     private let settings = Settings.shared
@@ -43,6 +46,11 @@ final class ReminderManager: ObservableObject {
         secondsSinceLastStanding = 0
     }
 
+    /// 重置喝水提醒计时
+    func resetWater() {
+        secondsSinceLastWater = 0
+    }
+
     private func tick() {
         // 暂停或休息时不计时
         guard timerManager.phase == .working else {
@@ -51,6 +59,7 @@ final class ReminderManager: ObservableObject {
 
         secondsSinceLastBlink += 1
         secondsSinceLastStanding += 1
+        secondsSinceLastWater += 1
 
         // 眨眼提醒
         if settings.blinkReminderEnabled {
@@ -70,6 +79,17 @@ final class ReminderManager: ObservableObject {
                 secondsSinceLastStanding = 0
                 DispatchQueue.main.async { [weak self] in
                     self?.onStandingReminder?()
+                }
+            }
+        }
+
+        // 喝水提醒
+        if settings.waterReminderEnabled {
+            let waterInterval = settings.waterIntervalMinutes * 60
+            if secondsSinceLastWater >= waterInterval {
+                secondsSinceLastWater = 0
+                DispatchQueue.main.async { [weak self] in
+                    self?.onWaterReminder?()
                 }
             }
         }

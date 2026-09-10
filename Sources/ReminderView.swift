@@ -5,6 +5,7 @@ import AppKit
 enum ReminderType {
     case blink
     case standing
+    case water
 }
 
 /// 通用提醒卡片视图
@@ -19,6 +20,7 @@ struct ReminderView: View {
         switch type {
         case .blink: return "眨眨眼"
         case .standing: return "站起来活动一下"
+        case .water: return "该喝水啦"
         }
     }
 
@@ -26,6 +28,7 @@ struct ReminderView: View {
         switch type {
         case .blink: return "让眼睛放松一下，看看远处"
         case .standing: return "伸展身体，促进血液循环"
+        case .water: return "喝口水，补充水分，保持健康"
         }
     }
 
@@ -33,6 +36,7 @@ struct ReminderView: View {
         switch type {
         case .blink: return "eye"
         case .standing: return "figure.stand"
+        case .water: return "cup.and.saucer.fill"
         }
     }
 
@@ -40,6 +44,7 @@ struct ReminderView: View {
         switch type {
         case .blink: return Color(red: 0.2, green: 0.5, blue: 0.9)
         case .standing: return Color(red: 0.9, green: 0.5, blue: 0.2)
+        case .water: return Color(red: 0.1, green: 0.6, blue: 0.85)
         }
     }
 
@@ -70,7 +75,8 @@ struct ReminderView: View {
                         .foregroundColor(iconColor)
                         .scaleEffect(y: animate ? (type == .blink ? 0.1 : 1.0) : 1.0)
                         .scaleEffect(animate ? (type == .standing ? 1.1 : 1.0) : 1.0)
-                        .offset(y: animate ? (type == .standing ? -5 : 0) : 0)
+                        .offset(y: animate ? ((type == .standing || type == .water) ? -6 : 0) : 0)
+                        .rotationEffect(.degrees(animate ? (type == .water ? -8 : 0) : 0))
                 }
 
                 // 文字
@@ -122,6 +128,11 @@ struct ReminderView: View {
             case .standing:
                 // 站立动画：上下浮动
                 withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                    animate = true
+                }
+            case .water:
+                // 喝水动画：杯子轻轻倾斜浮动
+                withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
                     animate = true
                 }
             }

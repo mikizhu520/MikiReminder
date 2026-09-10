@@ -97,15 +97,15 @@ struct MenuBarView: View {
                         // 信息卡片
                         VStack(spacing: 0) {
                             infoRow(
-                                icon: "bolt.fill",
-                                iconColor: Color(red: 1.0, green: 0.78, blue: 0.0),
+                                icon: "timer",
+                                iconColor: Color(red: 0.3, green: 0.55, blue: 0.75),
                                 title: "当前专注时间",
                                 value: timer.currentFocusTimeString
                             )
                             Divider().background(Color.black.opacity(0.06))
                             infoRow(
-                                icon: "leaf.fill",
-                                iconColor: Color(red: 0.85, green: 0.35, blue: 0.65),
+                                icon: "cup.and.saucer.fill",
+                                iconColor: Color(red: 0.55, green: 0.4, blue: 0.25),
                                 title: "即将到来的休息",
                                 value: "\(settings.breakSeconds >= 60 ? "长休息" : "短休息") · \(settings.breakSeconds >= 60 ? "\(settings.breakSeconds / 60)分" : "\(settings.breakSeconds)秒")"
                             )

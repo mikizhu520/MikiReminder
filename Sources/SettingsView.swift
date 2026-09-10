@@ -99,6 +99,24 @@ struct SettingsView: View {
                                 unit: "分钟"
                             )
                         }
+
+                        Divider()
+
+                        toggleRow(
+                            title: "喝水提醒",
+                            subtitle: "定时提醒喝水，补充水分",
+                            isOn: $settings.waterReminderEnabled
+                        )
+
+                        if settings.waterReminderEnabled {
+                            stepperRow(
+                                title: "喝水间隔",
+                                subtitle: "每隔多久提醒一次喝水",
+                                value: $settings.waterIntervalMinutes,
+                                range: 15...120,
+                                unit: "分钟"
+                            )
+                        }
                     }
                 }
 
@@ -149,7 +167,7 @@ struct SettingsView: View {
             }
             .padding(28)
         }
-        .frame(width: 480, height: 780)
+        .frame(width: 480, height: 880)
         .background(Color(NSColor.windowBackgroundColor))
     }
 
