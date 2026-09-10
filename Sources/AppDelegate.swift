@@ -217,6 +217,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.behavior = .transient
         popover.animates = true
         popover.contentSize = NSSize(width: 340, height: 380)
+        popover.appearance = settings.appearance.nsAppearance
 
         let contentView = MenuBarView(
             onOpenSettings: { [weak self] in
@@ -258,6 +259,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             popover.performClose(sender)
         } else {
             if let button = statusItem.button {
+                // 更新 popover 外观
+                popover.appearance = settings.appearance.nsAppearance
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 popover.contentViewController?.view.window?.makeKey()
             }
@@ -354,6 +357,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.backgroundColor = .clear
         window.hasShadow = false
         window.ignoresMouseEvents = false
+        window.appearance = settings.appearance.nsAppearance
 
         let reminderView = ReminderView(type: type) { [weak self] in
             self?.hideReminder()
