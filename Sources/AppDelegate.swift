@@ -202,12 +202,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func menuQuit() { NSApp.terminate(nil) }
 
     private func showAbout() {
-        let alert = NSAlert()
-        alert.messageText = "MikiReminder"
-        alert.informativeText = "版本 1.0.0\n\n一款 macOS 护眼休息提醒应用\n遵循 20-20-20 护眼法则"
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "确定")
-        alert.runModal()
+        let aboutWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 360, height: 440),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        aboutWindow.title = "关于 MikiReminder"
+        aboutWindow.center()
+        aboutWindow.isReleasedWhenClosed = false
+        aboutWindow.appearance = settings.appearance.nsAppearance
+
+        let hostingView = NSHostingView(rootView: AboutView())
+        aboutWindow.contentView = hostingView
+
+        aboutWindow.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     // MARK: - 弹出面板
